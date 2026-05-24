@@ -248,13 +248,13 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
     // 🔴 MÃ CẤU HÌNH FIREBASE THẬT CỦA MẠNH YTB
     const firebaseConfig = {
         apiKey: "AIzaSyBjVFdXplbEex5Nt32PGW2Q6lfHzEgjSgQ",
         authDomain: "thegioicapdoi.firebaseapp.com",
-        databaseURL: "https://thegioicapdoi-default-rtdb.firebaseio.com/", // Tự động khớp với Project ID của bạn
+        databaseURL: "https://thegioicapdoi-default-rtdb.firebaseio.com/", 
         projectId: "thegioicapdoi",
         storageBucket: "thegioicapdoi.firebasestorage.app",
         messagingSenderId: "1018569428409",
@@ -284,8 +284,10 @@
     const listContainer = document.getElementById('promise-list-container');
 
     let isLoginMode = true; 
-    let promises = [];
-    let userRef = null;
+    let promises = []; // Mảng chứa các object: { id: "key", text: "...", checked: false }
+
+    // Đường dẫn database đồng bộ chung cho cả 2 thiết bị
+    const globalPromisesRef = ref(db, 'promises');
 
     // --- CHUYỂN ĐỔI CHẾ ĐỘ ĐĂNG NHẬP / ĐĂNG KÝ ---
     switchBox.addEventListener('click', (e) => {
@@ -321,21 +323,11 @@
                     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                         showErr("Sai tài khoản hoặc mật khẩu rồi bé ơi!");
                     } else {
-                        showErr("Lỗi đăng nhập: " + error.message + " (Nhớ kích hoạt Email/Password trong tab Authentication nha!)");
+                        showErr("Lỗi đăng nhập: " + error.message);
                     }
                 });
         } else {
             createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    const uid = userCredential.user.uid;
-                    // Tạo list lời hứa mẫu ngọt ngào cho tài khoản mới tinh
-                    const defaultList = [
-                        { text: "Dậy sớm cùng nhau mỗi ngày", checked: false },
-                        { text: "Đi du lịch ít nhất 1 lần/năm", checked: false },
-                        { text: "Nói lời yêu mỗi tối", checked: false }
-                    ];
-                    set(ref(db, 'users/' + uid), defaultList);
-                })
                 .catch(error => {
                     console.error(error);
                     if (error.code === 'auth/email-already-in-use') {
@@ -343,7 +335,7 @@
                     } else if (error.code === 'auth/invalid-email') {
                         showErr("Định dạng Email chưa đúng bồ ơi (ví dụ: abc@gmail.com)");
                     } else {
-                        showErr("Lỗi đăng ký: " + error.message + " (Hãy chắc chắn bạn đã kích hoạt Email/Password trong Firebase!)");
+                        showErr("Lỗi đăng ký: " + error.message);
                     }
                 });
         }
@@ -354,21 +346,30 @@
         signOut(auth);
     });
 
-    // --- THEO DÕI TRẠNG THÁI TÀI KHOẢN ---
+    // --- THEO DÕI TRẠNG THÁI TÀI KHOẢN & ĐỒNG BỘ REALTIME ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
             authScreen.style.display = 'none';
             mainScreen.style.display = 'block';
             welcomeText.textContent = `Tài khoản: ${user.email}`;
             
-            userRef = ref(db, 'users/' + user.uid);
-            
-            onValue(userRef, (snapshot) => {
+            // Lắng nghe liên tục node 'promises' dùng chung
+            onValue(globalPromisesRef, (snapshot) => {
                 const data = snapshot.val();
-                promises = data ? Object.values(data) : [];
+                promises = [];
+                if (data) {
+                    // Chuyển đổi dữ liệu Object của Firebase sang mảng kèm ID
+                    Object.keys(data).forEach(key => {
+                        promises.push({
+                            id: key,
+                            text: data[key].text,
+                            checked: data[key].checked
+                        });
+                    });
+                }
                 renderPromises();
             }, (error) => {
-                alert("Lỗi database: " + error.message + "\n(Nhớ vào tab Rules của Realtime Database đổi sang Test Mode nha!)");
+                alert("Lỗi database: " + error.message + "\n(Nhớ đổi tab Rules của Realtime Database sang Test Mode nhé!)");
             });
         } else {
             mainScreen.style.display = 'none';
@@ -409,7 +410,7 @@
     // --- HIỂN THỊ DANH SÁCH ---
     function renderPromises() {
         listContainer.innerHTML = '';
-        promises.forEach((promise, index) => {
+        promises.forEach((promise) => {
             const li = document.createElement('li');
             li.className = 'promise-item';
 
@@ -423,8 +424,9 @@
             checkbox.checked = promise.checked;
             
             checkbox.addEventListener('change', (e) => {
-                promises[index].checked = checkbox.checked;
-                if(userRef) set(userRef, promises); 
+                // Cập nhật tình trạng check theo ID lên thẳng đám mây
+                const itemRef = ref(db, 'promises/' + promise.id + '/checked');
+                set(itemRef, checkbox.checked);
                 if (checkbox.checked) createHeartBurst(e);
             });
 
@@ -439,9 +441,13 @@
             labelText.addEventListener('click', (e) => { e.preventDefault(); });
             labelText.addEventListener('blur', () => {
                 const newText = labelText.textContent.trim();
-                if (newText === '') { promises.splice(index, 1); } 
-                else { promises[index].text = newText; }
-                if(userRef) set(userRef, promises);
+                if (newText === '') { 
+                    // Xóa hẳn node nếu người dùng xóa hết ký tự
+                    set(ref(db, 'promises/' + promise.id), null); 
+                } else { 
+                    // Cập nhật lại nội dung text mới lên Firebase
+                    set(ref(db, 'promises/' + promise.id + '/text'), newText); 
+                }
             });
 
             labelText.addEventListener('keydown', (e) => {
@@ -461,8 +467,9 @@
         const text = input.value.trim();
         if (text === '') return;
 
-        promises.push({ text: text, checked: false });
-        if(userRef) set(userRef, promises); 
+        // Tạo một node có ID ngẫu nhiên không trùng lặp
+        const newPromiseRef = push(globalPromisesRef);
+        set(newPromiseRef, { text: text, checked: false });
 
         input.value = '';
         input.focus();
