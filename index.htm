@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Những Lời Hứa Yêu Thương - Thế Giới Cặp Đôi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,600;1,500&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --title-font: 'Playfair Display', serif;
+            --body-font: 'Open Sans', sans-serif;
+            --bg-pink: #fbe6ec;
+            --main-pink: #f5b7cb;
+            --dark-pink: #cc91a3;
+            --text-color: #6c4755;
+            --text-muted: #a67b8a;
+        }
+
+        body {
+            font-family: var(--body-font);
+            background-color: var(--bg-pink);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 100 100"><path d="M50 80 C 20 50, 20 20, 50 35 C 80 20, 80 50, 50 80" fill="%23fcf0f3" opacity="0.7"/></svg>');
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+            color: var(--text-color);
+        }
+
+        body::before { content: "💕"; position: absolute; top: 5%; left: 5%; font-size: 30px; opacity: 0.3; }
+        body::after { content: "🌸"; position: absolute; top: 8%; right: 6%; font-size: 28px; opacity: 0.3; }
+
+        /* --- CỬA SỔ ĐĂNG NHẬP / ĐĂNG KÝ --- */
+        .auth-card {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(108, 71, 85, 0.1);
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(245, 183, 203, 0.4);
+            text-align: center;
+            z-index: 20;
+        }
+        .auth-card h2 {
+            font-family: var(--title-font);
+            margin-top: 0;
+            color: var(--text-color);
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border: 1.5px solid #f0ccd5;
+            border-radius: 50px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: var(--body-font);
+            font-size: 14px;
+        }
+        .auth-form input:focus { border-color: var(--main-pink); }
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff9fb3;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+        .auth-btn:hover { background-color: #f78da1; }
+        
+        .switch-mode-text {
+            font-size: 13px;
+            margin-top: 15px;
+            color: var(--text-muted);
+        }
+        .switch-link {
+            color: var(--dark-pink);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .error-msg { 
+            color: #e05d75; 
+            font-size: 13px; 
+            margin-top: 10px; 
+            display: none; 
+            background-color: #fff0f2;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #ffd1d8;
+        }
+
+        /* --- GIAO DIỆN CHÍNH (ẨN KHI CHƯA ĐĂNG NHẬP) --- */
+        .container {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.96);
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(108, 71, 85, 0.08);
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid rgba(245, 183, 203, 0.4);
+            z-index: 10;
+            position: relative;
+        }
+
+        .user-welcome {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 12px;
+            color: var(--dark-pink);
+            font-style: italic;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-family: var(--title-font);
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 28px;
+            letter-spacing: 0.5px;
+        }
+        h1::before, h1::after { content: " 💖 "; font-size: 24px; }
+
+        .sub-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            background-color: #fdeef2;
+            color: var(--dark-pink);
+            font-family: var(--title-font);
+            font-style: italic;
+            font-size: 14px;
+            padding: 6px 20px;
+            border-radius: 20px;
+            width: fit-content;
+            margin: 0 auto 30px auto;
+            border: 1px dashed var(--main-pink);
+        }
+
+        .input-section { display: flex; gap: 12px; margin-top: 25px; }
+        #new-promise-input {
+            flex: 1; padding: 11px 20px;
+            border: 1.5px solid #f0ccd5; border-radius: 50px;
+            font-size: 14px; outline: none;
+            font-family: var(--body-font); transition: all 0.3s ease;
+            background-color: #fff; color: var(--text-color);
+        }
+        #new-promise-input:focus { border-color: var(--main-pink); box-shadow: 0 0 8px rgba(245, 183, 203, 0.3); }
+        
+        #add-btn {
+            padding: 0 24px; background-color: #ff9fb3; color: white;
+            border: none; border-radius: 50px; font-size: 13px; font-weight: 600;
+            cursor: pointer; font-family: var(--body-font); transition: all 0.2s ease;
+        }
+        #add-btn:hover { background-color: #f78da1; transform: translateY(-1px); }
+        #add-btn::after { content: " ♥"; font-size: 11px; }
+
+        .promise-list { list-style: none; padding: 0; margin: 0; max-height: 380px; overflow-y: auto; }
+        .promise-list::-webkit-scrollbar { width: 4px; }
+        .promise-list::-webkit-scrollbar-thumb { background-color: #f0ccd5; border-radius: 10px; }
+
+        .promise-item { display: flex; align-items: center; margin-bottom: 14px; position: relative; }
+        .promise-item input[type="checkbox"] { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+
+        .heart-icon {
+            width: 28px; height: 28px; margin-right: 12px; cursor: pointer; display: inline-block;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z' fill='none' stroke='%23f5b7cb' stroke-width='2'/></svg>");
+            background-size: contain; background-repeat: no-repeat; transition: transform 0.2s; flex-shrink: 0;
+        }
+        .promise-item:hover .heart-icon { transform: scale(1.1); }
+        .promise-item input[type="checkbox"]:checked + .heart-icon {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z' fill='%23f5b7cb'/></svg>");
+            animation: heartPulse 0.3s ease-out;
+        }
+
+        @keyframes heartPulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+        .editable-label {
+            font-size: 15px; color: var(--text-color); outline: none; padding: 8px 35px 8px 18px;
+            flex: 1; line-height: 1.4; background-color: #fff; border: 1.5px solid #f2d6de;
+            border-radius: 30px; position: relative; transition: all 0.2s ease;
+        }
+        .editable-label::after { content: "♥"; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #f5b7cb; font-size: 12px; transition: color 0.2s; }
+        .editable-label:focus { border-color: var(--main-pink); background-color: #fffafb; }
+
+        .promise-item input[type="checkbox"]:checked ~ .editable-label { text-decoration: line-through; color: var(--text-muted); background-color: #faf5f6; border-color: #e6d0d5; }
+        .promise-item input[type="checkbox"]:checked ~ .editable-label::after { color: var(--text-muted); }
+
+        .burst-heart { position: absolute; pointer-events: none; font-size: 14px; animation: burst 0.7s ease-out forwards; z-index: 100; }
+        @keyframes burst { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0.4); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="auth-card" id="auth-screen">
+    <h2 id="auth-title">💕 Cặp Đôi Đăng Nhập 💕</h2>
+    <div class="auth-form">
+        <input type="email" id="auth-email" placeholder="Nhập Email của cặp đôi...">
+        <input type="password" id="auth-pass" placeholder="Nhập mật khẩu bí mật...">
+        <div class="error-msg" id="error-text">Đã xảy ra lỗi! ❌</div>
+        <button class="auth-btn" id="auth-submit">Bước vào thế giới yêu thương</button>
+        
+        <div class="switch-mode-text" id="switch-box">
+            Chưa có tài khoản thế giới riêng? <span class="switch-link" id="switch-mode-btn">Đăng ký ngay</span>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="main-screen">
+    <div class="user-welcome" id="welcome-text">Thế giới của hai ta...</div>
+    <button class="logout-btn" id="logout-submit">Đăng xuất</button>
+
+    <h1>NHỮNG LỜI HỨA YÊU THƯƠNG</h1>
+    <div class="sub-badge"><span>♥</span> KHÔNG GIAN BÍ MẬT <span>♥</span> 😍👧🧒</div>
+    
+    <ul class="promise-list" id="promise-list-container"></ul>
+
+    <div class="input-section">
+        <input type="text" id="new-promise-input" placeholder="THÊM LỜI HỨA MỚI CỦA CHÚNG TA...">
+        <button id="add-btn">THÊM</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+    // 🔴 MÃ CẤU HÌNH FIREBASE THẬT CỦA MẠNH YTB
+    const firebaseConfig = {
+        apiKey: "AIzaSyBjVFdXplbEex5Nt32PGW2Q6lfHzEgjSgQ",
+        authDomain: "thegioicapdoi.firebaseapp.com",
+        databaseURL: "https://thegioicapdoi-default-rtdb.firebaseio.com/", // Tự động khớp với Project ID của bạn
+        projectId: "thegioicapdoi",
+        storageBucket: "thegioicapdoi.firebasestorage.app",
+        messagingSenderId: "1018569428409",
+        appId: "1:1018569428409:web:aa94aafc1d39593ebc7a68",
+        measurementId: "G-66BGNQYWZ0"
+    };
+
+    // Khởi tạo các dịch vụ
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // DOM Elements
+    const authScreen = document.getElementById('auth-screen');
+    const mainScreen = document.getElementById('main-screen');
+    const authTitle = document.getElementById('auth-title');
+    const authEmail = document.getElementById('auth-email');
+    const authPass = document.getElementById('auth-pass');
+    const authSubmit = document.getElementById('auth-submit');
+    const switchBox = document.getElementById('switch-box');
+    const errorText = document.getElementById('error-text');
+    const logoutSubmit = document.getElementById('logout-submit');
+    const welcomeText = document.getElementById('welcome-text');
+
+    const input = document.getElementById('new-promise-input');
+    const addBtn = document.getElementById('add-btn');
+    const listContainer = document.getElementById('promise-list-container');
+
+    let isLoginMode = true; 
+    let promises = [];
+    let userRef = null;
+
+    // --- CHUYỂN ĐỔI CHẾ ĐỘ ĐĂNG NHẬP / ĐĂNG KÝ ---
+    switchBox.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'switch-mode-btn') {
+            isLoginMode = !isLoginMode;
+            errorText.style.display = 'none';
+            if (isLoginMode) {
+                authTitle.textContent = "💕 Cặp Đôi Đăng Nhập 💕";
+                authSubmit.textContent = "Bước vào thế giới yêu thương";
+                switchBox.innerHTML = `Chưa có tài khoản thế giới riêng? <span class="switch-link" id="switch-mode-btn">Đăng ký ngay</span>`;
+            } else {
+                authTitle.textContent = "🌸 Đăng Ký Thế Giới Mới 🌸";
+                authSubmit.textContent = "Khởi tạo không gian cặp đôi";
+                switchBox.innerHTML = `Đã có tài khoản rồi? <span class="switch-link" id="switch-mode-btn">Đăng nhập tại đây</span>`;
+            }
+        }
+    });
+
+    // --- XỬ LÝ CLICK NÚT ĐĂNG NHẬP / ĐĂNG KÝ ---
+    authSubmit.addEventListener('click', () => {
+        const email = authEmail.value.trim();
+        const password = authPass.value;
+
+        if(!email || !password) { showErr("Vui lòng điền đủ thông tin bồ ơi!"); return; }
+        if(password.length < 6) { showErr("Mật khẩu phải từ 6 ký tự trở lên nha!"); return; }
+
+        errorText.style.display = 'none';
+
+        if (isLoginMode) {
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(error => {
+                    console.error(error);
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        showErr("Sai tài khoản hoặc mật khẩu rồi bé ơi!");
+                    } else {
+                        showErr("Lỗi đăng nhập: " + error.message + " (Nhớ kích hoạt Email/Password trong tab Authentication nha!)");
+                    }
+                });
+        } else {
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const uid = userCredential.user.uid;
+                    // Tạo list lời hứa mẫu ngọt ngào cho tài khoản mới tinh
+                    const defaultList = [
+                        { text: "Dậy sớm cùng nhau mỗi ngày", checked: false },
+                        { text: "Đi du lịch ít nhất 1 lần/năm", checked: false },
+                        { text: "Nói lời yêu mỗi tối", checked: false }
+                    ];
+                    set(ref(db, 'users/' + uid), defaultList);
+                })
+                .catch(error => {
+                    console.error(error);
+                    if (error.code === 'auth/email-already-in-use') {
+                        showErr("Email này đã có người đăng ký rồi bồ ơi!");
+                    } else if (error.code === 'auth/invalid-email') {
+                        showErr("Định dạng Email chưa đúng bồ ơi (ví dụ: abc@gmail.com)");
+                    } else {
+                        showErr("Lỗi đăng ký: " + error.message + " (Hãy chắc chắn bạn đã kích hoạt Email/Password trong Firebase!)");
+                    }
+                });
+        }
+    });
+
+    // --- ĐĂNG XUẤT ---
+    logoutSubmit.addEventListener('click', () => {
+        signOut(auth);
+    });
+
+    // --- THEO DÕI TRẠNG THÁI TÀI KHOẢN ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            authScreen.style.display = 'none';
+            mainScreen.style.display = 'block';
+            welcomeText.textContent = `Tài khoản: ${user.email}`;
+            
+            userRef = ref(db, 'users/' + user.uid);
+            
+            onValue(userRef, (snapshot) => {
+                const data = snapshot.val();
+                promises = data ? Object.values(data) : [];
+                renderPromises();
+            }, (error) => {
+                alert("Lỗi database: " + error.message + "\n(Nhớ vào tab Rules của Realtime Database đổi sang Test Mode nha!)");
+            });
+        } else {
+            mainScreen.style.display = 'none';
+            authScreen.style.display = 'block';
+            authEmail.value = '';
+            authPass.value = '';
+        }
+    });
+
+    function showErr(msg) {
+        errorText.textContent = msg;
+        errorText.style.display = 'block';
+    }
+
+    // --- HIỆU ỨNG PHÁO HOA TIM ---
+    function createHeartBurst(e) {
+        const colors = ['#f5b7cb', '#ff9fb3', '#cc91a3'];
+        const rect = e.target.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2 + window.scrollX;
+        const centerY = rect.top + rect.height / 2 + window.scrollY;
+
+        for (let i = 0; i < 8; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'burst-heart'; heart.innerHTML = '♥';
+            heart.style.color = colors[Math.floor(Math.random() * colors.length)];
+            heart.style.left = `${centerX}px`; heart.style.top = `${centerY}px`;
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 30 + Math.random() * 30;
+            const x = Math.cos(angle) * distance; const y = Math.sin(angle) * distance;
+
+            heart.style.setProperty('--x', `${x}px`); heart.style.setProperty('--y', `${y}px`);
+            document.body.appendChild(heart);
+            heart.addEventListener('animationend', () => heart.remove());
+        }
+    }
+
+    // --- HIỂN THỊ DANH SÁCH ---
+    function renderPromises() {
+        listContainer.innerHTML = '';
+        promises.forEach((promise, index) => {
+            const li = document.createElement('li');
+            li.className = 'promise-item';
+
+            const itemLabelContainer = document.createElement('label');
+            itemLabelContainer.style.display = 'flex';
+            itemLabelContainer.style.alignItems = 'center';
+            itemLabelContainer.style.width = '100%';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = promise.checked;
+            
+            checkbox.addEventListener('change', (e) => {
+                promises[index].checked = checkbox.checked;
+                if(userRef) set(userRef, promises); 
+                if (checkbox.checked) createHeartBurst(e);
+            });
+
+            const heartIcon = document.createElement('span');
+            heartIcon.className = 'heart-icon';
+
+            const labelText = document.createElement('div');
+            labelText.className = 'editable-label';
+            labelText.contentEditable = true;
+            labelText.textContent = promise.text;
+
+            labelText.addEventListener('click', (e) => { e.preventDefault(); });
+            labelText.addEventListener('blur', () => {
+                const newText = labelText.textContent.trim();
+                if (newText === '') { promises.splice(index, 1); } 
+                else { promises[index].text = newText; }
+                if(userRef) set(userRef, promises);
+            });
+
+            labelText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); labelText.blur(); }
+            });
+
+            itemLabelContainer.appendChild(checkbox);
+            itemLabelContainer.appendChild(heartIcon);
+            itemLabelContainer.appendChild(labelText);
+            li.appendChild(itemLabelContainer);
+            listContainer.appendChild(li);
+        });
+    }
+
+    // --- THÊM LỜI HỨA MỚI ---
+    function addPromise() {
+        const text = input.value.trim();
+        if (text === '') return;
+
+        promises.push({ text: text, checked: false });
+        if(userRef) set(userRef, promises); 
+
+        input.value = '';
+        input.focus();
+    }
+
+    addBtn.addEventListener('click', addPromise);
+    input.addEventListener('keypress', function(e) { if (e.key === 'Enter') addPromise(); });
+</script>
+</body>
+</html>
